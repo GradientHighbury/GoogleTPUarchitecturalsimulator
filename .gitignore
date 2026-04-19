@@ -212,4 +212,5 @@ __marimo__/
 *.log
 *.tex
 *.gz
+*.out
 *.toc
