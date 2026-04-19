@@ -1,0 +1,69 @@
+{
+  "name": "BERT-Large",
+  "description": "BERT-Large 24-layer encoder, seq_len=512, batch=8",
+  "layers": [
+    {
+      "name": "Embed_proj",
+      "M": 4096,
+      "N": 1024,
+      "K": 1024,
+      "activation": "identity"
+    },
+    {
+      "name": "Attn_Q",
+      "M": 4096,
+      "N": 1024,
+      "K": 1024,
+      "activation": "identity"
+    },
+    {
+      "name": "Attn_K",
+      "M": 4096,
+      "N": 1024,
+      "K": 1024,
+      "activation": "identity"
+    },
+    {
+      "name": "Attn_V",
+      "M": 4096,
+      "N": 1024,
+      "K": 1024,
+      "activation": "identity"
+    },
+    {
+      "name": "Attn_QK",
+      "M": 4096,
+      "N": 64,
+      "K": 64,
+      "activation": "softmax"
+    },
+    {
+      "name": "Attn_AV",
+      "M": 4096,
+      "N": 64,
+      "K": 4096,
+      "activation": "layernorm"
+    },
+    {
+      "name": "Attn_out",
+      "M": 4096,
+      "N": 1024,
+      "K": 1024,
+      "activation": "identity"
+    },
+    {
+      "name": "FFN_1",
+      "M": 4096,
+      "N": 4096,
+      "K": 1024,
+      "activation": "gelu"
+    },
+    {
+      "name": "FFN_2",
+      "M": 4096,
+      "N": 1024,
+      "K": 4096,
+      "activation": "layernorm"
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "name": "GPT-2 Medium",
+  "description": "GPT-2 Medium 24-layer decoder, seq_len=1024, batch=4",
+  "layers": [
+    {
+      "name": "Embed_proj",
+      "M": 4096,
+      "N": 1024,
+      "K": 1024,
+      "activation": "identity"
+    },
+    {
+      "name": "Attn_QKV",
+      "M": 4096,
+      "N": 3072,
+      "K": 1024,
+      "activation": "identity"
+    },
+    {
+      "name": "Attn_Score",
+      "M": 4096,
+      "N": 128,
+      "K": 128,
+      "activation": "softmax"
+    },
+    {
+      "name": "Attn_out",
+      "M": 4096,
+      "N": 1024,
+      "K": 1024,
+      "activation": "identity"
+    },
+    {
+      "name": "FFN_1",
+      "M": 4096,
+      "N": 4096,
+      "K": 1024,
+      "activation": "gelu"
+    },
+    {
+      "name": "FFN_2",
+      "M": 4096,
+      "N": 1024,
+      "K": 4096,
+      "activation": "layernorm"
+    }
+  ]
+}

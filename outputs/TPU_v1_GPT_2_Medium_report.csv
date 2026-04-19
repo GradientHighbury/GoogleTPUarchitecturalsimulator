@@ -1,0 +1,7 @@
+layer_name,M,N,K,compute_cycles,mxu_utilization,compute_tflops,compute_time_us,memory_time_us,total_time_us,in_sram,total_bytes_kb,arith_intensity,bound,achievable_tops,vpu_op,vpu_time_us
+Embed_proj,4096,1024,1024,98240,66.71,61.207,140.343,4.544,163.749,True,13312.0,910.22,COMPUTE,91.75,identity,23.4057
+Attn_QKV,4096,3072,1024,294720,66.71,61.207,421.029,95.605,491.246,False,31744.0,1293.47,COMPUTE,91.75,identity,70.2171
+Attn_Score,4096,128,128,12272,8.34,7.656,17.531,0.53,40.937,True,1552.0,126.03,MEMORY,42.85,softmax,23.4057
+Attn_out,4096,1024,1024,98240,66.71,61.207,140.343,4.544,163.749,True,13312.0,910.22,COMPUTE,91.75,identity,23.4057
+FFN_1,4096,4096,1024,392960,66.71,61.207,561.371,123.362,1310.354,False,40960.0,1365.33,COMPUTE,91.75,gelu,748.9829
+FFN_2,4096,1024,4096,294848,88.91,81.574,421.211,86.353,795.703,False,28672.0,1365.33,COMPUTE,91.75,layernorm,374.4914

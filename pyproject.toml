@@ -1,0 +1,12 @@
+[project]
+name = "googletpuarchitecturalsimulator"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "kaleido>=1.2.0",
+    "numpy>=2.4.4",
+    "plotly>=6.7.0",
+    "tree>=0.2.4",
+]
