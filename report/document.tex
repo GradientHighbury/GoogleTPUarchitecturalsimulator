@@ -1,0 +1,597 @@
+\documentclass[12pt,a4paper]{article}
+
+% -------------------- PACKAGES --------------------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper,margin=1in]{geometry}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{enumitem}
+\usepackage{setspace}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tocloft}
+
+% -------------------- PAGE STYLE --------------------
+\setstretch{1.15}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Google TPU Architectural Simulator}
+\fancyhead[R]{\thepage}
+\setlength{\headheight}{15pt}
+\flushbottom
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=blue,
+	urlcolor=blue,
+	citecolor=blue,
+	pdftitle={Google TPU Architectural Simulator}
+}
+
+% -------------------- GLOBAL SPACING FIXES --------------------
+\setlength{\parskip}{6pt}
+\setlength{\parindent}{0pt}
+\setlength{\textfloatsep}{12pt plus 2pt minus 2pt}
+\setlength{\floatsep}{10pt plus 2pt minus 2pt}
+\setlength{\intextsep}{10pt plus 2pt minus 2pt}
+\setlength{\abovecaptionskip}{6pt}
+\setlength{\belowcaptionskip}{2pt}
+
+\titlespacing*{\section}{0pt}{10pt}{6pt}
+\titlespacing*{\subsection}{0pt}{8pt}{4pt}
+\titlespacing*{\subsubsection}{0pt}{6pt}{3pt}
+
+\titleformat{\section}
+{\normalfont\bfseries\Large}{\thesection}{1em}{}
+
+\titleformat{\subsection}
+{\normalfont\bfseries\large}{\thesubsection}{1em}{}
+
+% -------------------- TOC STYLE --------------------
+\renewcommand{\cftsecfont}{\bfseries}
+\renewcommand{\cftsecpagefont}{\bfseries}
+\setlength{\cftbeforesecskip}{4pt}
+
+% -------------------- CODE STYLE --------------------
+\definecolor{codebg}{RGB}{245,245,245}
+\definecolor{codecomment}{RGB}{0,128,0}
+\definecolor{codekeyword}{RGB}{0,0,180}
+
+\lstset{
+	backgroundcolor=\color{codebg},
+	basicstyle=\ttfamily\small,
+	breaklines=true,
+	frame=single,
+	commentstyle=\color{codecomment},
+	keywordstyle=\color{codekeyword},
+	showstringspaces=false
+}
+
+% -------------------- IMAGE PATH --------------------
+\graphicspath{{images/}}
+
+% -------------------- IMAGE HELPER --------------------
+\newcommand{\reportimage}[3]{
+	\begin{figure}[H]
+		\centering
+		\IfFileExists{images/#1}{
+			\includegraphics[width=#2\textwidth]{images/#1}
+		}{
+			\fbox{
+				\parbox[c][0.25\textheight][c]{#2\textwidth}{
+					\centering
+					Missing image file\\[6pt]
+					\texttt{#1}
+				}
+			}
+		}
+		\caption{#3}
+		\label{fig:#1}
+	\end{figure}
+}
+
+\begin{document}
+	
+	% -------------------- TITLE PAGE --------------------
+	\begin{titlepage}
+		\centering
+		\vspace*{2.2cm}
+		{\Large PROJECT REPORT\par}
+		\vspace{0.8cm}
+		{\Huge \textbf{Google TPU Architectural Simulator}\par}
+		\vspace{0.7cm}
+		{\Large A Python-Based Performance Simulator for TPU-Inspired Architectures\par}
+		\vspace{1.5cm}
+		{\Large Submitted by\par}
+		\vspace{0.3cm}
+		{\Large \textbf{Anoop G Krishnan (M25AI2100)  \\  Christin Jais (M25AI2048)}\par}
+		\vfill
+		{\Large \today\par}
+	\end{titlepage}
+	
+	% -------------------- FRONT MATTER --------------------
+	\pagenumbering{roman}
+	
+	% -------------------- ABSTRACT --------------------
+	\section*{Abstract}
+	\addcontentsline{toc}{section}{Abstract}
+	Tensor Processing Units (TPUs) are specialized accelerators designed to speed up machine learning workloads by efficiently performing matrix operations using dedicated hardware such as Matrix Multiply Units (MXUs). Modern deep learning models rely heavily on dense linear algebra, making accelerator-aware analysis important for both hardware understanding and performance optimization.
+	
+	This project presents a \textbf{Google TPU Architectural Simulator}, a Python-based simulator inspired by TPU-style architectures. The simulator accepts hardware configuration files and workload descriptions as input, models the behavior of major architectural components such as the MXU, memory subsystem, vector processing unit, and roofline limits, and generates performance reports for workloads such as ResNet-50, BERT-Large, and GPT-2 Medium.
+	
+	The main purpose of this project is educational and analytical. Rather than reproducing proprietary TPU internals exactly, the simulator provides a practical framework for studying how changes in architecture and workload characteristics influence compute utilization, memory traffic, arithmetic intensity, latency, and overall system behavior. The project also includes visualization support to help compare different TPU configurations and workload types through graphs.
+	
+	\clearpage
+
+	
+	% -------------------- MAIN MATTER --------------------
+	\pagenumbering{arabic}
+	
+	% -------------------- INTRODUCTION --------------------
+	\section{Introduction}
+	
+	\subsection{Overview}
+	Machine learning models such as convolutional neural networks and transformer architectures are built on repeated matrix and tensor operations. These operations dominate the execution time of inference and training workloads, which motivated the development of specialized hardware accelerators.
+	
+	Google TPUs are examples of such accelerators. They are designed to execute matrix-heavy workloads efficiently using a structured compute engine and optimized data movement. Understanding such hardware is valuable for students and researchers working in computer architecture, machine learning systems, and accelerator design.
+	
+	This project aims to create a TPU-inspired simulator that estimates the performance of different workloads under different hardware configurations. The simulator makes it possible to analyze architectural trade-offs without requiring access to real TPU hardware.The code details are available at \\ \url{https://github.com/GradientHighbury/GoogleTPUarchitecturalsimulator.git}
+	
+	\subsection{Need for the Project}
+	Direct hardware prototyping is expensive and time-consuming. Before real hardware is built, architects and researchers often rely on simulation to estimate expected behavior, identify bottlenecks, and compare design alternatives.
+	
+	A simulator is especially useful in the context of accelerators because it allows fast experimentation with:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Compute array sizes
+		\item Memory bandwidth and capacity
+		\item Workload structure
+		\item Utilization and bottleneck trends
+		\item Cross-generation configuration comparisons
+	\end{itemize}
+	
+	\reportimage{Tpuarchitectureoverview.jpg}{0.72}{High-level TPU-inspired architecture overview.}
+	
+	% -------------------- PROBLEM STATEMENT --------------------
+	\section{Problem Statement}
+	Deep learning accelerators must balance compute throughput, memory access, and data reuse. A powerful compute array alone does not guarantee good performance if memory cannot feed data fast enough. Similarly, large workloads may not fully utilize the array if their shapes are not well matched to the hardware.
+	
+	The problem addressed in this project is the development of a configurable architectural simulator that can:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Read hardware configuration files representing TPU-like architectures
+		\item Read workload descriptions for neural network models
+		\item Estimate performance metrics such as latency, utilization, arithmetic intensity, and compute versus memory behavior
+		\item Generate reports and visualizations for analysis
+	\end{itemize}
+	
+	% -------------------- OBJECTIVES --------------------
+	\section{Objectives}
+	The objectives of this project are:
+	\begin{itemize}[leftmargin=1.5cm,itemsep=2pt,topsep=4pt]
+		\item To understand the architecture and design principles behind TPU-style accelerators
+		\item To build a configurable performance simulator in Python
+		\item To model key components such as the MXU, memory system, and vector processing unit
+		\item To evaluate multiple workloads under multiple TPU configurations
+		\item To generate reports and visual plots for analysis
+		\item To provide a beginner-friendly framework for learning accelerator performance concepts
+	\end{itemize}
+	
+	% -------------------- BACKGROUND --------------------
+	\section{Background and Fundamental Concepts}
+	
+	\subsection{What is a TPU?}
+	A Tensor Processing Unit is a specialized processor designed to accelerate machine learning operations, especially matrix multiplication and tensor manipulation. TPUs differ from CPUs and GPUs because they are optimized for a narrower but highly important class of operations common in neural networks.
+	
+	\subsection{Why Matrix Operations Matter}
+	Most deep learning layers eventually reduce to matrix multiplications, convolutions, or vector operations. Examples include:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Fully connected layers
+		\item Convolution layers
+		\item Attention projections in transformers
+		\item Feed-forward network blocks
+	\end{itemize}
+	
+	Because these operations are repeated many times, specialized matrix hardware can significantly improve performance.
+	
+	\subsection{Systolic Array Concept}
+	A systolic array is a grid of processing elements through which data moves in a rhythmic pattern. Each processing element performs a small operation, usually a multiply-accumulate step, and passes intermediate values to neighboring elements.
+	
+	The main benefits of a systolic array are:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item High parallelism
+		\item Local data reuse
+		\item Reduced dependence on repeated memory reads
+		\item Better efficiency for regular matrix workloads
+	\end{itemize}
+	
+	\reportimage{systolicarraydiagram.jpg}{0.68}{Conceptual systolic array used in TPU-style matrix processing.}
+	
+	\subsection{Architectural Simulation}
+	Architectural simulation is the software-based modeling of hardware behavior. Instead of executing a workload on real silicon, a simulator estimates what the hardware would do. This includes expected latency, utilization, memory pressure, and roofline-limited performance.
+	
+	This project follows that idea. It uses workload descriptions and hardware presets to predict how a TPU-style architecture would behave for different neural network models.
+	
+	% -------------------- PROJECT STRUCTURE --------------------
+	\section{Project Structure and Modules}
+	
+	\subsection{Repository Structure}
+	The project is organized as follows:
+	
+\begin{lstlisting}
+	.
+	|-- configs
+	|   |-- tpu_v1.ini
+	|   |-- tpu_v2.ini
+	|   `-- tpu_v4.ini
+	|-- core
+	|   |-- config.py
+	|   |-- __init__.py
+	|   |-- memory.py
+	|   |-- mxu.py
+	|   |-- roofline.py
+	|   |-- tpu_sim.py
+	|   `-- vpu.py
+	|-- workloads
+	|	|-- bert_large.json
+	|	|-- gpt2_medium.json
+	|	|-- resnet50.json
+	|-- main.py
+	|-- outputs
+	|-- pyproject.toml
+	|-- README.md
+	|-- uv.lock
+	|-- visualize.py
+	`
+\end{lstlisting}
+	
+	\subsection{Module Description}
+	
+	\subsubsection{configs/}
+	This folder stores the TPU hardware presets. The files \texttt{tpu\_v1.ini}, \texttt{tpu\_v2.ini}, and \texttt{tpu\_v4.ini} represent different architectural configurations that can be simulated.
+	
+	\subsubsection{workloads/}
+	This folder stores workload descriptions. These files define neural network models such as BERT-Large, GPT-2 Medium, and ResNet-50.
+	
+	\subsubsection{core/config.py}
+	This module is responsible for reading and handling architecture parameters from the configuration files.
+	
+	\subsubsection{core/mxu.py}
+	This module represents the Matrix Multiply Unit, which is the central compute engine of the TPU-inspired design.
+	
+	\subsubsection{core/memory.py}
+	This module handles memory-related modeling. It is responsible for estimating memory movement, bandwidth effects, and other data transfer constraints.
+	
+	\subsubsection{core/vpu.py}
+	This module likely models vector-oriented computations that are not handled directly by the MXU. These may include activation-like operations, reductions, or post-processing computations.
+	
+	\subsubsection{core/roofline.py}
+	This module likely supports roofline-based performance analysis by comparing the arithmetic intensity of a workload against the architectural compute and memory limits.
+	
+	\subsubsection{core/tpu\_sim.py}
+	This module serves as the simulation engine that combines all submodules to generate performance estimates.
+	
+	\subsubsection{main.py}
+	This is the command-line entry point used to run simulations.
+	
+	\subsubsection{visualize.py}
+	This is the plotting script used to generate graphs from output CSV reports.
+	
+	\reportimage{projectflowchart.png}{0.78}{Overall flow of the TPU architectural simulator.}
+	
+	% -------------------- WORKING PRINCIPLE --------------------
+	\section{Working Principle of the Project}
+	
+	\subsection{Step 1: Reading Hardware Configuration}
+	The simulator first reads the hardware configuration file specified by the user through the command line. A configuration file defines the architectural properties of a TPU preset such as TPU v1, TPU v2, or TPU v4.
+	
+	Typical configuration parameters may include:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Compute array dimensions
+		\item Memory properties
+		\item Bandwidth assumptions
+		\item Throughput-related limits
+		\item Other architecture-specific parameters
+	\end{itemize}
+	
+	\subsection{Step 2: Reading Workload Description}
+	The simulator then reads the workload JSON file. This file represents the model to be analyzed, such as ResNet-50, BERT-Large, or GPT-2 Medium.
+	
+	The workload description contains the information needed to estimate how much computation and data movement will be required during execution.
+	
+	\subsection{Step 3: Mapping Work to Hardware Units}
+	Once the workload is loaded, the simulator maps the operations to the hardware model:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Matrix-dominant operations are handled by the MXU
+		\item Memory transfers are handled by the memory model
+		\item Vector or auxiliary operations are handled by the VPU
+	\end{itemize}
+	
+	\subsection{Step 4: Compute and Memory Estimation}
+	The simulator estimates:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item How much work is sent to the matrix engine
+		\item How efficiently the MXU is utilized
+		\item How much data must be fetched or stored
+		\item Whether execution is compute-dominated or memory-dominated
+	\end{itemize}
+	
+	\subsection{Step 5: Roofline Interpretation}
+	The roofline model gives a simple visual interpretation of performance. It uses arithmetic intensity and hardware limits to determine whether a workload is limited mainly by compute capability or by memory bandwidth.
+	
+	\subsection{Step 6: Report Generation}
+	After simulation, the tool writes CSV reports into the \texttt{outputs/} directory. These reports summarize the behavior of a given TPU-workload combination.
+	
+	\subsection{Step 7: Visualization}
+	The \texttt{visualize.py} script reads the output reports and creates plots such as:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Arithmetic intensity plots
+		\item Compute versus memory plots
+		\item Latency breakdown plots
+		\item MXU utilization plots
+		\item Roofline plots
+		\item Overall comparison plots
+	\end{itemize}
+	
+	\reportimage{simulationpipeline.png}{0.74}{Step-by-step simulation pipeline from input to performance report.}
+	
+	% -------------------- IMPLEMENTATION --------------------
+	\section{Implementation Details}
+	
+	\subsection{Running the Simulator}
+	The simulator is executed from the command line by specifying both a hardware configuration file and a workload file.
+	
+	\begin{lstlisting}[language=bash]
+		python main.py --config configs/tpu_v1.ini --workload workloads/bert_large.json --outdir outputs
+	\end{lstlisting}
+	
+	Other example commands are shown below:
+	
+	\begin{lstlisting}[language=bash]
+		python main.py --config configs/tpu_v1.ini --workload workloads/gpt2_medium.json --outdir outputs
+		python main.py --config configs/tpu_v1.ini --workload workloads/resnet50.json --outdir outputs
+		
+		python main.py --config configs/tpu_v2.ini --workload workloads/bert_large.json --outdir outputs
+		python main.py --config configs/tpu_v2.ini --workload workloads/gpt2_medium.json --outdir outputs
+		python main.py --config configs/tpu_v2.ini --workload workloads/resnet50.json --outdir outputs
+		
+		python main.py --config configs/tpu_v4.ini --workload workloads/bert_large.json --outdir outputs
+		python main.py --config configs/tpu_v4.ini --workload workloads/gpt2_medium.json --outdir outputs
+		python main.py --config configs/tpu_v4.ini --workload workloads/resnet50.json --outdir outputs
+	\end{lstlisting}
+	
+	\subsection{Generating Visualizations}
+	To generate all plots at once:
+	
+	\begin{lstlisting}[language=bash]
+		python visualize.py --all --outdir outputs
+	\end{lstlisting}
+	
+	To generate plots for a particular TPU configuration:
+	
+	\begin{lstlisting}[language=bash]
+		python visualize.py --config configs/tpu_v1.ini --outdir outputs
+	\end{lstlisting}
+	
+	To generate plots for a specific configuration and workload:
+	
+	\begin{lstlisting}[language=bash]
+		python visualize.py --config configs/tpu_v1.ini --workload workloads/bert_large.json --outdir outputs
+	\end{lstlisting}
+	
+	\subsection{Expected Report Files}
+	The project output includes report CSV files for the TPU-workload combinations, such as:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item \texttt{TPU\_v1\_BERT\_Large\_report.csv}
+		\item \texttt{TPU\_v1\_GPT\_2\_Medium\_report.csv}
+		\item \texttt{TPU\_v1\_ResNet\_50\_report.csv}
+		\item \texttt{TPU\_v2\_BERT\_Large\_report.csv}
+		\item \texttt{TPU\_v2\_GPT\_2\_Medium\_report.csv}
+		\item \texttt{TPU\_v2\_ResNet\_50\_report.csv}
+		\item \texttt{TPU\_v4\_BERT\_Large\_report.csv}
+		\item \texttt{TPU\_v4\_GPT\_2\_Medium\_report.csv}
+		\item \texttt{TPU\_v4\_ResNet\_50\_report.csv}
+	\end{itemize}
+	
+	% -------------------- METHODOLOGY --------------------
+	\section{Methodology}
+	
+	\subsection{Input Space}
+	The simulator studies the interaction between:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item A chosen TPU-style architecture
+		\item A chosen workload
+		\item A performance model composed of compute, memory, vector processing, and roofline analysis
+	\end{itemize}
+	
+	\subsection{Computation Perspective}
+	The project assumes that matrix-heavy operations dominate execution. Therefore, the MXU is treated as the main source of computational throughput.
+	
+	\subsection{Memory Perspective}
+	Even when the compute engine is powerful, performance can degrade if memory movement becomes the bottleneck. Hence the simulator separately analyzes compute demand and memory demand.
+	
+	\subsection{Performance Perspective}
+	The simulator aims to answer practical questions such as:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Which workload uses the TPU array most efficiently?
+		\item Which TPU generation performs better for a given workload?
+		\item Is performance limited by computation or by memory?
+		\item How does arithmetic intensity change across models?
+	\end{itemize}
+	
+	% -------------------- RESULTS --------------------
+	\section{Results and Analysis}
+	
+	\subsection{Available Output Visualizations}
+	The output filenames indicate five plot categories for each TPU-workload pair:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Arithmetic intensity
+		\item Compute versus memory
+		\item Latency breakdown
+		\item MXU utilization
+		\item Roofline analysis
+	\end{itemize}
+	
+	There is also a combined comparison figure for all TPU-workload combinations.
+	
+	\subsection{Overall Comparison}
+	\reportimage{tpu_comparison_all.png}{0.86}{Overall comparison across all TPU configurations and workloads.}
+	
+	% -------------------- TPU V1 --------------------
+	\subsection{TPU v1 Results}
+	
+	\subsubsection{BERT-Large on TPU v1}
+	\reportimage{arithmetic_intensity_TPU_v1_BERT-Large.png}{0.76}{Arithmetic intensity for BERT-Large on TPU v1.}
+	\reportimage{compute_vs_memory_TPU_v1_BERT-Large.png}{0.76}{Compute versus memory behavior for BERT-Large on TPU v1.}
+	\reportimage{latency_breakdown_TPU_v1_BERT-Large.png}{0.76}{Latency breakdown for BERT-Large on TPU v1.}
+	\reportimage{mxu_utilization_TPU_v1_BERT-Large.png}{0.76}{MXU utilization for BERT-Large on TPU v1.}
+	\reportimage{roofline_TPU_v1_BERT-Large.png}{0.76}{Roofline analysis for BERT-Large on TPU v1.}
+	
+	\subsubsection{GPT-2 Medium on TPU v1}
+	\reportimage{arithmetic_intensity_TPU_v1_GPT-2_Medium.png}{0.76}{Arithmetic intensity for GPT-2 Medium on TPU v1.}
+	\reportimage{compute_vs_memory_TPU_v1_GPT-2_Medium.png}{0.76}{Compute versus memory behavior for GPT-2 Medium on TPU v1.}
+	\reportimage{latency_breakdown_TPU_v1_GPT-2_Medium.png}{0.76}{Latency breakdown for GPT-2 Medium on TPU v1.}
+	\reportimage{mxu_utilization_TPU_v1_GPT-2_Medium.png}{0.76}{MXU utilization for GPT-2 Medium on TPU v1.}
+	\reportimage{roofline_TPU_v1_GPT-2_Medium.png}{0.76}{Roofline analysis for GPT-2 Medium on TPU v1.}
+	
+	\subsubsection{ResNet-50 on TPU v1}
+	\reportimage{arithmetic_intensity_TPU_v1_ResNet-50.png}{0.76}{Arithmetic intensity for ResNet-50 on TPU v1.}
+	\reportimage{compute_vs_memory_TPU_v1_ResNet-50.png}{0.76}{Compute versus memory behavior for ResNet-50 on TPU v1.}
+	\reportimage{latency_breakdown_TPU_v1_ResNet-50.png}{0.76}{Latency breakdown for ResNet-50 on TPU v1.}
+	\reportimage{mxu_utilization_TPU_v1_ResNet-50.png}{0.76}{MXU utilization for ResNet-50 on TPU v1.}
+	\reportimage{roofline_TPU_v1_ResNet-50.png}{0.76}{Roofline analysis for ResNet-50 on TPU v1.}
+	
+	% -------------------- TPU V2 --------------------
+	\subsection{TPU v2 Results}
+	
+	\subsubsection{BERT-Large on TPU v2}
+	\reportimage{arithmetic_intensity_TPU_v2_BERT-Large.png}{0.76}{Arithmetic intensity for BERT-Large on TPU v2.}
+	\reportimage{compute_vs_memory_TPU_v2_BERT-Large.png}{0.76}{Compute versus memory behavior for BERT-Large on TPU v2.}
+	\reportimage{latency_breakdown_TPU_v2_BERT-Large.png}{0.76}{Latency breakdown for BERT-Large on TPU v2.}
+	\reportimage{mxu_utilization_TPU_v2_BERT-Large.png}{0.76}{MXU utilization for BERT-Large on TPU v2.}
+	\reportimage{roofline_TPU_v2_BERT-Large.png}{0.76}{Roofline analysis for BERT-Large on TPU v2.}
+	
+	\subsubsection{GPT-2 Medium on TPU v2}
+	\reportimage{arithmetic_intensity_TPU_v2_GPT-2_Medium.png}{0.76}{Arithmetic intensity for GPT-2 Medium on TPU v2.}
+	\reportimage{compute_vs_memory_TPU_v2_GPT-2_Medium.png}{0.76}{Compute versus memory behavior for GPT-2 Medium on TPU v2.}
+	\reportimage{latency_breakdown_TPU_v2_GPT-2_Medium.png}{0.76}{Latency breakdown for GPT-2 Medium on TPU v2.}
+	\reportimage{mxu_utilization_TPU_v2_GPT-2_Medium.png}{0.76}{MXU utilization for GPT-2 Medium on TPU v2.}
+	\reportimage{roofline_TPU_v2_GPT-2_Medium.png}{0.76}{Roofline analysis for GPT-2 Medium on TPU v2.}
+	
+	\subsubsection{ResNet-50 on TPU v2}
+	\reportimage{arithmetic_intensity_TPU_v2_ResNet-50.png}{0.76}{Arithmetic intensity for ResNet-50 on TPU v2.}
+	\reportimage{compute_vs_memory_TPU_v2_ResNet-50.png}{0.76}{Compute versus memory behavior for ResNet-50 on TPU v2.}
+	\reportimage{latency_breakdown_TPU_v2_ResNet-50.png}{0.76}{Latency breakdown for ResNet-50 on TPU v2.}
+	\reportimage{mxu_utilization_TPU_v2_ResNet-50.png}{0.76}{MXU utilization for ResNet-50 on TPU v2.}
+	\reportimage{roofline_TPU_v2_ResNet-50.png}{0.76}{Roofline analysis for ResNet-50 on TPU v2.}
+	
+	% -------------------- TPU V4 --------------------
+	\subsection{TPU v4 Results}
+	
+	\subsubsection{BERT-Large on TPU v4}
+	\reportimage{arithmetic_intensity_TPU_v4_BERT-Large.png}{0.76}{Arithmetic intensity for BERT-Large on TPU v4.}
+	\reportimage{compute_vs_memory_TPU_v4_BERT-Large.png}{0.76}{Compute versus memory behavior for BERT-Large on TPU v4.}
+	\reportimage{latency_breakdown_TPU_v4_BERT-Large.png}{0.76}{Latency breakdown for BERT-Large on TPU v4.}
+	\reportimage{mxu_utilization_TPU_v4_BERT-Large.png}{0.76}{MXU utilization for BERT-Large on TPU v4.}
+	\reportimage{roofline_TPU_v4_BERT-Large.png}{0.76}{Roofline analysis for BERT-Large on TPU v4.}
+	
+	\subsubsection{GPT-2 Medium on TPU v4}
+	\reportimage{arithmetic_intensity_TPU_v4_GPT-2_Medium.png}{0.76}{Arithmetic intensity for GPT-2 Medium on TPU v4.}
+	\reportimage{compute_vs_memory_TPU_v4_GPT-2_Medium.png}{0.76}{Compute versus memory behavior for GPT-2 Medium on TPU v4.}
+	\reportimage{latency_breakdown_TPU_v4_GPT-2_Medium.png}{0.76}{Latency breakdown for GPT-2 Medium on TPU v4.}
+	\reportimage{mxu_utilization_TPU_v4_GPT-2_Medium.png}{0.76}{MXU utilization for GPT-2 Medium on TPU v4.}
+	\reportimage{roofline_TPU_v4_GPT-2_Medium.png}{0.76}{Roofline analysis for GPT-2 Medium on TPU v4.}
+	
+	\subsubsection{ResNet-50 on TPU v4}
+	\reportimage{arithmetic_intensity_TPU_v4_ResNet-50.png}{0.76}{Arithmetic intensity for ResNet-50 on TPU v4.}
+	\reportimage{compute_vs_memory_TPU_v4_ResNet-50.png}{0.76}{Compute versus memory behavior for ResNet-50 on TPU v4.}
+	\reportimage{latency_breakdown_TPU_v4_ResNet-50.png}{0.76}{Latency breakdown for ResNet-50 on TPU v4.}
+	\reportimage{mxu_utilization_TPU_v4_ResNet-50.png}{0.76}{MXU utilization for ResNet-50 on TPU v4.}
+	\reportimage{roofline_TPU_v4_ResNet-50.png}{0.76}{Roofline analysis for ResNet-50 on TPU v4.}
+	
+	\subsection{Discussion}
+	The result plots support architectural analysis from multiple viewpoints. Arithmetic intensity helps understand workload characteristics, compute-versus-memory plots highlight bottlenecks, latency breakdown identifies time contributors, MXU utilization indicates how effectively the compute array is used, and roofline plots summarize performance limits visually.
+	
+	The combined comparison plot is useful for observing high-level trends across TPU generations and workloads. Such a view can help identify which configurations are better suited for transformer workloads and which are more favorable for convolutional models.
+	
+	% -------------------- ADVANTAGES --------------------
+	\section{Advantages and Applications}
+	
+	\subsection{Advantages}
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Provides practical understanding of TPU-style accelerator concepts
+		\item Allows experimentation without requiring real TPU hardware
+		\item Supports multiple hardware presets and multiple workloads
+		\item Generates reports and graph-based analysis
+		\item Helps identify performance bottlenecks in a structured way
+		\item Suitable for academic learning and project demonstrations
+	\end{itemize}
+	
+	\subsection{Applications}
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item Computer architecture education
+		\item ML systems coursework
+		\item Accelerator performance analysis
+		\item Design-space exploration
+		\item Comparative workload studies
+		\item Research prototyping
+	\end{itemize}
+	
+	% -------------------- LIMITATIONS --------------------
+	\section{Limitations and Future Work}
+	
+	\subsection{Limitations}
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item The simulator is TPU-inspired and not an exact proprietary Google TPU model
+		\item Results depend on modeling assumptions and workload abstraction quality
+		\item Low-level hardware behavior may not be captured in full detail
+		\item Real execution on silicon may differ from simulated estimates
+	\end{itemize}
+	
+	\subsection{Future Work}
+	Possible future extensions include:
+	\begin{itemize}[itemsep=2pt, topsep=4pt]
+		\item More detailed memory hierarchy modeling
+		\item Energy and power estimation
+		\item Support for more workloads and more layer types
+		\item Improved roofline and bottleneck diagnostics
+		\item Interactive dashboards for result exploration
+		\item Sensitivity analysis across architecture parameters
+	\end{itemize}
+	
+	% -------------------- CONCLUSION --------------------
+	\section{Conclusion}
+	This project presents a beginner-friendly yet meaningful TPU-inspired architectural simulator for analyzing deep learning workloads. By combining configurable hardware presets, workload descriptions, simulation logic, CSV reporting, and result visualization, the system provides a practical way to study accelerator behavior.
+	
+	The project is valuable because it turns theoretical architecture concepts into an executable analysis workflow. It also provides a strong foundation for future research and educational work in machine learning systems, accelerator design, and performance modeling.
+	
+	% -------------------- REFERENCES --------------------
+	\begin{thebibliography}{9}
+		
+		\bibitem{tpu_blog}
+		Google Cloud Blog,
+		\textit{An in-depth look at Google's first Tensor Processing Unit (TPU)}.
+		Available at: \url{https://cloud.google.com/blog/products/ai-machine-learning/an-in-depth-look-at-googles-first-tensor-processing-unit-tpu}
+		
+		\bibitem{tpu_docs}
+		Google Cloud Documentation,
+		\textit{TPU architecture}.
+		Available at: \url{https://docs.cloud.google.com/tpu/docs/system-architecture-tpu-vm}
+		
+		\bibitem{scalesim}
+		SCALE-Sim,
+		\textit{Systolic Array Accelerator Simulator}.
+		Available at: \url{https://github.com/ARM-software/SCALE-Sim}
+		
+	\end{thebibliography}
+	
+\end{document}
